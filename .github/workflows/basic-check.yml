@@ -1,0 +1,99 @@
+name: Basic Project Check
+
+# 简单的基础检查工作流
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  basic-check:
+    name: Basic Repository Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Check repository structure
+      run: |
+        echo "📁 Repository structure:"
+        find . -type f -name ".*" -o -type f -name "*.md" -o -type f -name "*.yml" -o -type f -name "*.yaml" | head -20
+        
+    - name: Validate README.md
+      run: |
+        if [ -f "README.md" ]; then
+          echo "✅ README.md exists"
+          echo "📄 README.md content preview:"
+          head -10 README.md
+        else
+          echo "❌ README.md not found"
+          exit 1
+        fi
+        
+    - name: Check .gitignore
+      run: |
+        if [ -f ".gitignore" ]; then
+          echo "✅ .gitignore exists"
+          echo "📋 .gitignore has $(wc -l < .gitignore) lines"
+        else
+          echo "⚠️ .gitignore not found"
+        fi
+        
+    - name: Validate workflow files
+      run: |
+        if [ -d ".github/workflows" ]; then
+          echo "✅ GitHub workflows directory exists"
+          echo "🔧 Workflow files:"
+          ls -la .github/workflows/
+        else
+          echo "ℹ️ No GitHub workflows found"
+        fi
+        
+    - name: Project summary
+      run: |
+        echo "📊 Project Summary:"
+        echo "├── Total files: $(find . -type f | wc -l)"
+        echo "├── Markdown files: $(find . -name '*.md' | wc -l)"
+        echo "├── YAML files: $(find . -name '*.yml' -o -name '*.yaml' | wc -l)"
+        echo "└── Hidden files: $(find . -name '.*' -type f | wc -l)"
+        
+    - name: Check basic project health
+      run: |
+        echo "🏥 Project Health Check:"
+        
+        # Check for common project files
+        health_score=0
+        
+        if [ -f "README.md" ]; then
+          echo "✅ README.md (+1)"
+          health_score=$((health_score + 1))
+        fi
+        
+        if [ -f ".gitignore" ]; then
+          echo "✅ .gitignore (+1)"
+          health_score=$((health_score + 1))
+        fi
+        
+        if [ -d ".github/workflows" ]; then
+          echo "✅ GitHub Actions (+1)"
+          health_score=$((health_score + 1))
+        fi
+        
+        if [ -f "LICENSE" ] || [ -f "LICENSE.md" ] || [ -f "LICENSE.txt" ]; then
+          echo "✅ LICENSE file (+1)"
+          health_score=$((health_score + 1))
+        else
+          echo "⚠️ No LICENSE file found"
+        fi
+        
+        echo "📈 Health Score: $health_score/4"
+        
+        if [ $health_score -ge 3 ]; then
+          echo "🎉 Project health is good!"
+        elif [ $health_score -ge 2 ]; then
+          echo "👍 Project health is fair"
+        else
+          echo "⚠️ Project could use some improvements"
+        fi
